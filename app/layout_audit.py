@@ -37,7 +37,7 @@ class AuditReport:
 
     @property
     def passed(self) -> bool:
-        return self.score >= 85 and not any(i.severity == 'error' for i in self.issues)
+        return self.score >= 95 and not any(i.severity == 'error' for i in self.issues)
 
     def summary(self) -> str:
         errors   = [i for i in self.issues if i.severity == 'error']
