@@ -1,6 +1,6 @@
 # Documentação Técnica — Gerador de Apresentações · Matriz Educação
 
-> **Última atualização:** 2026-05-11
+> **Última atualização:** 2026-05-11 (temas visuais)
 > **Responsável técnico:** Desenvolvido com Claude Code (Anthropic)
 > **Repositório:** https://github.com/rafaelxavier-cmyk/reuniao-diretores-
 > **Deploy (produção):** Streamlit Community Cloud — share.streamlit.io
@@ -241,6 +241,42 @@ def _matches_agenda(num, title, agenda):
     # normaliza, remove acentos, compara palavras
     # retorna True se ≥2 palavras coincidem ou num está na agenda
 ```
+
+---
+
+## 8. Temas Visuais
+
+O gerador suporta 3 temas selecionáveis na UI antes de gerar. Todos usam a mesma logo, paleta base e estrutura de slide — o que muda são cores, estilo de card e tratamento de fundo.
+
+| Slug | Nome | Fundo | Cards | Acento principal |
+|------|------|-------|-------|-----------------|
+| `escuro` | Escuro Clássico | Branco implícito | LIGHT_BG com barra horizontal no topo | TEAL / NAVY alternado |
+| `claro` | Claro Profissional | Branco explícito | Branco com **barra vertical** na esquerda | TEAL / NAVY alternado |
+| `premium` | Premium Escuro | `#071E2B` (very dark) | `#0D2E41` com barra horizontal | TEAL / AMBER alternado |
+
+### Estrutura do `Theme` dataclass
+
+```python
+@dataclass
+class Theme:
+    name: str           # nome exibido na UI
+    slug: str           # chave usada em generate(theme_name=...)
+    card_style: str     # "top_bar" ou "left_bar"
+    slide_bg: RGBColor | None   # None = branco padrão
+    sidebar: RGBColor
+    sidebar_accent: RGBColor
+    title_col / supertitle_col / company_col / separator_col / footer_col
+    card_bg / card_title_col / bullet_col
+    accent_colors: List[RGBColor]   # cicla por seção
+    block_bg / block_accent_col / block_label_col / block_title_col
+    tag_bg / tag_text_col
+```
+
+### Como adicionar um novo tema
+
+1. Criar instância de `Theme` com os valores desejados
+2. Adicionar ao dict `THEMES` em `generator.py`
+3. Adicionar a entrada no dict `THEME_LABELS` em `app.py`
 
 ---
 
