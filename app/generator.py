@@ -280,46 +280,73 @@ def _slide_agenda(prs, blank, logo_blob, pauta: dict, footer: str):
             "Pauta do Dia", footer=footer)
 
     agenda = pauta.get("agenda", [])
-    ROW_H   = 530000
-    ROW_GAP = 60000
+    if not agenda:
+        return
+
+    # ── Layout dinâmico: ajusta ROW_H para caber todos os itens ────────────
+    ENC_RESERVE = 320000                               # barra de encerramento + margem
+    AVAIL_H     = SAFE_BOTTOM - ENC_RESERVE - CONTENT_TOP - 60000
+    ROW_GAP     = 40000
+    INT_H       = 220000                               # altura da linha de intervalo
+
+    n_regular  = sum(1 for a in agenda if a["num"] > 0)
+    n_interval = sum(1 for a in agenda if a["num"] == 0)
+
+    # Espaço consumido pelos intervalos
+    interval_total = n_interval * (INT_H + ROW_GAP)
+    avail_regular  = AVAIL_H - interval_total
+
+    # ROW_H ideal: divide igualmente o espaço restante
+    ROW_H_DEFAULT = 530000
+    ROW_H_MIN     = 220000
+    if n_regular > 0:
+        ROW_H = max(ROW_H_MIN, min(ROW_H_DEFAULT,
+                                   (avail_regular // n_regular) - ROW_GAP))
+    else:
+        ROW_H = ROW_H_DEFAULT
+
+    # Escala de fonte proporcional ao ROW_H (mín 11pt)
+    font_scale = ROW_H / ROW_H_DEFAULT
+    nome_sz    = max(11, int(16 * font_scale))
+    tag_h      = max(220000, min(310000, int(ROW_H * 0.55)))
+
     y = CONTENT_TOP
 
     for item in agenda:
         if item["num"] == 0:
-            # Intervalo
-            _rect(s, CONTENT_L, y + ROW_GAP // 2,
-                  FULL_W, 280000, RGBColor(0xEF, 0xF6, 0xF3))
-            _rect(s, CONTENT_L, y + ROW_GAP // 2, 80000, 280000, SEPARATOR)
-            _txt(s, CONTENT_L + 170000, y + ROW_GAP // 2 + 50000,
-                 5000000, 220000,
+            _rect(s, CONTENT_L, y + ROW_GAP // 2, FULL_W, INT_H,
+                  RGBColor(0xEF, 0xF6, 0xF3))
+            _rect(s, CONTENT_L, y + ROW_GAP // 2, 80000, INT_H, SEPARATOR)
+            _txt(s, CONTENT_L + 170000, y + ROW_GAP // 2 + 20000,
+                 5000000, INT_H,
                  f"  INTERVALO  —  {item['tempo']}", T["label"],
                  bold=True, color=GRAY_TXT)
-            y += 280000 + ROW_GAP
+            y += INT_H + ROW_GAP
             continue
 
-        accent = ACCENTS[(item["num"] - 1) % len(ACCENTS)]
+        accent  = ACCENTS[(item["num"] - 1) % len(ACCENTS)]
+        name_top = y + max(20000, (ROW_H - int(nome_sz * 16000)) // 2)
+
         _rect(s, CONTENT_L, y, FULL_W, ROW_H, LIGHT_BG)
         _rect(s, CONTENT_L, y, 80000, ROW_H, accent)
-        # Número
         _txt(s, CONTENT_L + 80000, y + 10000, 380000, ROW_H - 20000,
-             f"{item['num']:02d}", 16, bold=True, color=accent,
+             f"{item['num']:02d}", nome_sz, bold=True, color=accent,
              align=PP_ALIGN.CENTER)
-        # Nome
-        _txt(s, CONTENT_L + 520000, y + 90000, 8000000, 280000,
-             item["nome"], 16, bold=True, color=DARK_NAVY)
-        # Descrição (se presente na descrição original)
-        # Tempo badge
+        _txt(s, CONTENT_L + 520000, name_top, 8000000,
+             min(300000, ROW_H - 30000),
+             item["nome"], nome_sz, bold=True, color=DARK_NAVY)
         if item.get("tempo"):
             _tag(s,
                  CONTENT_L + FULL_W - 1200000,
-                 y + (ROW_H - 310000) // 2,
-                 1150000, 310000,
+                 y + (ROW_H - tag_h) // 2,
+                 1150000, tag_h,
                  item["tempo"], NAVY)
         y += ROW_H + ROW_GAP
 
-    # Linha de encerramento
-    _rect(s, CONTENT_L, SAFE_BOTTOM - 310000, FULL_W, 300000, TEAL)
-    _txt(s, CONTENT_L + 200000, SAFE_BOTTOM - 200000, 5000000, 280000,
+    # Barra de encerramento — sempre abaixo do último item, nunca sobreposta
+    enc_y = max(y + 20000, SAFE_BOTTOM - 310000)
+    _rect(s, CONTENT_L, enc_y, FULL_W, 300000, TEAL)
+    _txt(s, CONTENT_L + 200000, enc_y + 100000, 5000000, 200000,
          "ENCERRAMENTO  ·  FIM DA REUNIÃO", T["label"],
          bold=True, color=DARK_NAVY)
 
