@@ -78,7 +78,43 @@ def _render_preview(pauta: dict):
                         st.markdown(f"  – {it}")
 
 
-def _run_generation(pauta: dict):
+THEME_LABELS = {
+    "Escuro Clássico":    "escuro",
+    "Claro Profissional": "claro",
+    "Premium Escuro":     "premium",
+}
+
+
+def _theme_selector(key: str) -> str:
+    """Renderiza o seletor de tema e retorna o slug escolhido."""
+    st.markdown("**Tema visual**")
+    cols = st.columns(3)
+    previews = {
+        "Escuro Clássico":    ("#0E3D52", "#5DD4B4", "Fundo escuro navy · acento teal"),
+        "Claro Profissional": ("#FFFFFF", "#5DD4B4", "Fundo branco · cards com borda lateral"),
+        "Premium Escuro":     ("#071E2B", "#D97706", "Fundo escuro profundo · acento âmbar"),
+    }
+    choice = st.session_state.get(key, "Escuro Clássico")
+    for col, (label, (bg, ac, desc)) in zip(cols, previews.items()):
+        selected = (choice == label)
+        border = f"3px solid {ac}" if selected else "2px solid #E5E7EB"
+        if col.button(
+            label,
+            key=f"{key}_{label}",
+            use_container_width=True,
+            type="primary" if selected else "secondary",
+        ):
+            st.session_state[key] = label
+            choice = label
+        col.markdown(
+            f"<div style='font-size:11px;color:#6B7280;text-align:center;"
+            f"margin-top:-8px;padding-bottom:4px;'>{desc}</div>",
+            unsafe_allow_html=True,
+        )
+    return THEME_LABELS.get(st.session_state.get(key, "Escuro Clássico"), "escuro")
+
+
+def _run_generation(pauta: dict, theme_name: str = "escuro"):
     """Gera PPT com loop de qualidade e retorna (bytes, filename, audit_report)."""
     from quality_loop import run_quality_loop
 
@@ -95,7 +131,9 @@ def _run_generation(pauta: dict):
             status_box.info(f"Iteração {iteration}/{4} concluída — Score: {score}/100")
 
     pptx_bytes, audit_report, iterations_log = run_quality_loop(
-        pauta, out_path, ASSETS_DIR, progress_callback=_progress
+        pauta, out_path, ASSETS_DIR,
+        progress_callback=_progress,
+        theme_name=theme_name,
     )
 
     status_box.empty()
@@ -345,10 +383,11 @@ def _wizard():
         with col_back:
             if st.button("← Editar", use_container_width=True):
                 wiz["step"] = 3; st.rerun()
+        wiz_theme = _theme_selector("wiz_theme")
         with col_gen:
             if st.button("🚀 Gerar Apresentação", type="primary", use_container_width=True):
                 try:
-                    pptx_bytes, out_name, report = _run_generation(pauta)
+                    pptx_bytes, out_name, report = _run_generation(pauta, wiz_theme)
                     st.session_state["wiz_result"] = (pptx_bytes, out_name, report)
                 except Exception as e:
                     st.error(f"Erro: {e}")
@@ -495,9 +534,10 @@ with tab_upload:
 
             with st.container(border=True):
                 st.markdown("#### ③ Gere a apresentação")
+                theme_slug = _theme_selector("up_theme")
                 if st.button("✨  Gerar", use_container_width=True, type="primary"):
                     try:
-                        pptx_bytes, out_name, report = _run_generation(pauta)
+                        pptx_bytes, out_name, report = _run_generation(pauta, theme_slug)
                         st.session_state["up_result"] = (pptx_bytes, out_name, report)
                     except Exception as e:
                         st.error(f"Erro: {e}")

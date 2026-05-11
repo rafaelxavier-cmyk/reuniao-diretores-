@@ -16,6 +16,7 @@ def run_quality_loop(
     output_path: str,
     assets_dir: Path,
     progress_callback=None,
+    theme_name: str = "escuro",
 ) -> tuple:
     """
     Gera, audita e melhora iterativamente o PPT.
@@ -44,7 +45,7 @@ def run_quality_loop(
 
         # Gera com os parâmetros atuais
         pauta_iter = _apply_params(pauta, gen_params)
-        generate(pauta_iter, output_path, assets_dir=assets_dir)
+        generate(pauta_iter, output_path, assets_dir=assets_dir, theme_name=theme_name)
 
         # Audita
         report = audit(output_path)
