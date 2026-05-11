@@ -1,0 +1,23 @@
+# Generated outputs
+saida/
+entrada/
+Reunião de Diretores - *.pptx
+📌 PAUTA*.pdf
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.env
+venv/
+.venv/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Local scripts
+Iniciar App.bat
+
+# One-time scripts (already executed)
+app/criar_capa_modelo.py
