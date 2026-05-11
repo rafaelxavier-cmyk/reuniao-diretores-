@@ -18,7 +18,7 @@ import streamlit as st
 
 BASE_DIR   = Path(__file__).parent.parent
 ASSETS_DIR = Path(__file__).parent / "assets"
-SAIDA_DIR  = BASE_DIR / "saida"
+SAIDA_DIR  = Path(tempfile.gettempdir()) / "reuniao_saida"
 SAIDA_DIR.mkdir(exist_ok=True)
 
 
